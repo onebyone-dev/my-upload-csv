@@ -342,11 +342,6 @@ export default class CSVReader extends React.Component<Props, State> {
 
     reader.onloadend = () => {
       clearTimeout(this.state.timeout);
-      this.setState({
-        timeout: setTimeout(() => {
-          this.disableProgressBar();
-        }, 2000),
-      });
     };
 
     reader.readAsText(file, config.encoding || 'utf-8');
