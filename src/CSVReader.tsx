@@ -370,12 +370,8 @@ export default class CSVReader extends React.Component<Props, State> {
   };
 
   open = (e: any) => {
-    const { displayProgressBarStatus } = this.state;
-    if (e && displayProgressBarStatus === 'none') {
-      this.preventDefaults(e);
       this.inputFileRef.current.value = null;
       this.inputFileRef.current.click();
-    }
   };
 
   renderChildren = () => {

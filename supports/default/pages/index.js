@@ -147,7 +147,7 @@
 // ======================================================
 
 import React from 'react'
-import { CSVReader } from 'react-papaparse'
+import { CSVReader } from 'my-csv-upload'
 
 const buttonRef= React.createRef()
 
