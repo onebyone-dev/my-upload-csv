@@ -1,3 +1,4 @@
+import XLSX from 'xlsx'
 import React, { CSSProperties } from 'react';
 import PapaParse from 'papaparse';
 import getSize, { lightenDarkenColor } from './utils';
@@ -302,8 +303,8 @@ export default class CSVReader extends React.Component<Props, State> {
       delete config.complete;
     }
 
-    const size = file.size;
-    const data: any = [];
+    let size = file.size;
+    let data: any = [];
     let percent = 0;
 
     if (onDrop || onFileLoad) {
@@ -352,14 +353,40 @@ export default class CSVReader extends React.Component<Props, State> {
     }
 
     reader.onload = (e: any) => {
-      PapaParse.parse(e.target.result, options);
+      let fileName = file.name.split(".");
+      let fileExtension = fileName[file.name.split(".").length-1];
+      if(fileExtension === "csv"){
+        PapaParse.parse(e.target.result, options);
+      }
+
+      if(fileExtension === "xls"){
+        const wb = XLSX.read(e.target.result, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const splitCSV = csv.split("\n")
+        size = csv.length + (splitCSV.length-1);
+        PapaParse.parse(csv, options);
+      }
+
+      if(fileExtension === "xlsx"){
+        const wb = XLSX.read(e.target.result, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const splitCSV = csv.split("\n")
+        size = csv.length + (splitCSV.length-1);
+        PapaParse.parse(csv, options);
+
+      }
     };
 
     reader.onloadend = () => {
       clearTimeout(this.state.timeout);
     };
 
-    reader.readAsText(file, config.encoding || 'utf-8');
+    reader.readAsBinaryString(file)
+    // reader.readAsText(file, config.encoding || 'utf-8');
   };
 
   displayFileInfo = (file: any) => {
@@ -467,14 +494,41 @@ export default class CSVReader extends React.Component<Props, State> {
       displayProgressBarStatus,
     } = this.state;
 
+    const SheetJSFT = [
+      "xlsx",
+      "xlsb",
+      "xlsm",
+      "xls",
+      "xml",
+      "csv",
+      "txt",
+      "ods",
+      "fods",
+      "uos",
+      "sylk",
+      "dif",
+      "dbf",
+      "prn",
+      "qpw",
+      "123",
+      "wb*",
+      "wq*",
+      "html",
+      "htm"
+    ]
+      .map(function(x) {
+        return "." + x;
+      })
+      .join(",");
+
     return (
       <>
         <input
           type="file"
-          accept="text/csv"
+          accept={SheetJSFT}
           ref={this.inputFileRef}
           style={styles.inputFile}
-          onChange={(e) => this.fileChange(e)}
+          onChange={(e) => files && files.length > 0 ? e :  this.fileChange(e)}
         />
         {!this.childrenIsFunction() ? (
           <div
