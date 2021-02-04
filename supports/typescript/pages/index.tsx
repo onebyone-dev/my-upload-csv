@@ -431,7 +431,7 @@
 // ======================================================
 
 import React, { useState } from 'react'
-import { CSVReader, CSVDownloader } from 'my-csv-upload'
+import { CSVReader, CSVDownloader } from 'my-csv'
 
 const Index = () => {
   const [isReset, setIsReset] = useState<boolean>(false);

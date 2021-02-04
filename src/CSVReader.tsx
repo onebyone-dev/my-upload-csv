@@ -95,6 +95,8 @@ interface Props {
   noProgressBar?: boolean;
   removeButtonColor?: string;
   isReset?: boolean;
+  onDrag?: () => void;
+  onDragLeave?: () => void;
 }
 
 interface State {
@@ -166,7 +168,7 @@ export default class CSVReader extends React.Component<Props, State> {
         this.visibleProgressBar,
         false,
       );
-      currentDropAreaRef.addEventListener('drop', this.handleDrop, false);
+      currentDropAreaRef.addEventListener('drop',  this.handleDrop, false);
     }
   };
 
@@ -204,7 +206,7 @@ export default class CSVReader extends React.Component<Props, State> {
   };
 
   highlight = () => {
-    const { style } = this.props;
+    const { style, onDrag } = this.props;
     this.setState({
       dropAreaCustom: Object.assign(
         {},
@@ -223,10 +225,17 @@ export default class CSVReader extends React.Component<Props, State> {
           : styles.highlight,
       ),
     });
-    this.setState({ progressBar: 0 });
+      // this.setState({ progressBar: 0 });
+      if(onDrag){
+        if(!(this.state.files && this.state.files.length > 0)){
+          this.removeFile()
+        }
+        onDrag()
+      }
   };
 
   unhighlight = () => {
+    const { onDragLeave } = this.props
     this.setState({
       dropAreaCustom: Object.assign(
         {},
@@ -235,10 +244,16 @@ export default class CSVReader extends React.Component<Props, State> {
           : styles.dropAreaDefaultBorderColor,
       ),
     });
+      if(onDragLeave){
+        onDragLeave()
+      }
   };
 
   visibleProgressBar = () => {
-    this.setState({ displayProgressBarStatus: 'block' });
+    if(!(this.state.files && this.state.files.length > 0)){
+      this.setState({ displayProgressBarStatus: 'block' });
+
+    }
   };
 
   handleDrop = (e: any) => {
@@ -369,7 +384,7 @@ export default class CSVReader extends React.Component<Props, State> {
     });
   };
 
-  open = (e: any) => {
+  open = () => {
       this.inputFileRef.current.value = null;
       this.inputFileRef.current.click();
   };
@@ -473,9 +488,9 @@ export default class CSVReader extends React.Component<Props, State> {
                 ? styles.defaultCursor
                 : styles.pointerCursor,
             )}
-            onClick={(e) => {
+            onClick={() => {
               if (!noClick) {
-                this.open(e);
+                this.open();
               }
             }}
           >

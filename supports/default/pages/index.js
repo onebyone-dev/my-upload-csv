@@ -147,7 +147,7 @@
 // ======================================================
 
 import React from 'react'
-import { CSVReader } from 'my-csv-upload'
+import { CSVReader } from 'my-csv'
 
 const buttonRef= React.createRef()
 
