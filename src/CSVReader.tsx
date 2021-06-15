@@ -83,7 +83,7 @@ const styles = {
 
 interface Props {
   children: any;
-  onDrop?: (data: any, file?: any) => void;
+  onDrop?: (data: any, file?: any, size?: any) => void;
   onFileLoad?: (data: any, file?: any) => void;
   onError?: (err: any, file: any, inputElem: any, reason: any) => void;
   config?: any;
@@ -98,6 +98,10 @@ interface Props {
   isReset?: boolean;
   onDrag?: () => void;
   onDragLeave?: () => void;
+  dropAreaClass?: string;
+  getSizeInfo: (size: any) => void;
+  redirect: any;
+  // getProcess: (process: any) => void;
 }
 
 interface State {
@@ -289,7 +293,7 @@ export default class CSVReader extends React.Component<Props, State> {
     this.displayFileInfo(file);
     this.setState({ file });
 
-    const { onDrop, onFileLoad, onError, config = {} } = this.props;
+    const { onDrop, onFileLoad, onError, config = {}, getSizeInfo } = this.props;
     const reader = new window.FileReader();
     let options = {};
 
@@ -333,10 +337,16 @@ export default class CSVReader extends React.Component<Props, State> {
             } else {
               const progress = row.meta.cursor;
               const newPercent = Math.round((progress / size) * 100);
+              // getProcess(progress+" / "+size)
               if (newPercent === percent) {
                 return;
               }
               percent = newPercent;
+              if(percent === 100){
+                if(this.props.redirect){
+                  this.props.redirect();
+                }
+              } 
             }
             self.setState({ progressBar: percent });
           },
@@ -364,8 +374,7 @@ export default class CSVReader extends React.Component<Props, State> {
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const csv = XLSX.utils.sheet_to_csv(ws);
-        const splitCSV = csv.split("\n")
-        size = csv.length + (splitCSV.length-1);
+        size = csv.length;
         PapaParse.parse(csv, options);
       }
 
@@ -375,8 +384,9 @@ export default class CSVReader extends React.Component<Props, State> {
         const ws = wb.Sheets[wsname];
         const csv = XLSX.utils.sheet_to_csv(ws);
         const splitCSV = csv.split("\n")
-        size = csv.length + (splitCSV.length-1);
+        size = csv.length;
         PapaParse.parse(csv, options);
+        getSizeInfo(csv.length + " + " +  ((splitCSV.length)*2))
 
       }
     };
@@ -416,11 +426,11 @@ export default class CSVReader extends React.Component<Props, State> {
       this.inputFileRef.current.click();
   };
 
-  renderChildren = () => {
+  renderChildren = (progressBarRender: any) => {
     const { children } = this.props;
     const { file, progressBar } = this.state;
     return this.childrenIsFunction()
-      ? children({ file, progressBar })
+      ? children({ file, progressBar, progressBarRender })
       : children;
   };
 
@@ -528,11 +538,12 @@ export default class CSVReader extends React.Component<Props, State> {
           accept={SheetJSFT}
           ref={this.inputFileRef}
           style={styles.inputFile}
-          onChange={(e) => files && files.length > 0 ? e :  this.fileChange(e)}
+          onChange={(e) => this.fileChange(e)}
         />
         {!this.childrenIsFunction() ? (
           <div
             ref={this.dropAreaRef}
+            className={this.props.dropAreaClass}
             style={Object.assign(
               {},
               styles.dropArea,
@@ -602,9 +613,26 @@ export default class CSVReader extends React.Component<Props, State> {
             )}
           </div>
         ) : (
-          <div ref={this.dropAreaRef}>
-            {this.renderChildren()}
-            {files && files.length > 0 && !isCanceled && !noProgressBar && (
+          <div ref={this.dropAreaRef}
+          className={this.props.dropAreaClass}>
+            {this.renderChildren(
+              <React.Fragment>
+                <ProgressBar
+                  // TODO: Delete progressBar
+                  style={Object.assign(
+                    {},
+                    progressBarColor ? { backgroundColor: progressBarColor } : {},
+                    style?.dropArea?.dropFile?.progressBar ||
+                      style?.dropFile?.progressBar ||
+                      style?.progressBar,
+                  )}
+                  progressBar={progressBar}
+                  displayProgressBarStatus={displayProgressBarStatus}
+                  isButtonProgressBar
+                />
+              </React.Fragment>
+            )}
+            {/* {files && files.length > 0 && !isCanceled && !noProgressBar && (
               <ProgressBar
                 // TODO: Delete progressBar
                 style={Object.assign(
@@ -618,7 +646,7 @@ export default class CSVReader extends React.Component<Props, State> {
                 displayProgressBarStatus={displayProgressBarStatus}
                 isButtonProgressBar
               />
-            )}
+            )} */}
           </div>
         )}
       </>
